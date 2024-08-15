@@ -1,1 +1,1 @@
-cmd /k "python -m venv .venv & pip install -r requirements.txt & playwright install chromium"
+cmd /k "python -m venv .venv & cd .venv\Scripts & activate.bat & cd.. & cd .. & pip install -r requirements.txt & playwright install chromium"
