@@ -1,7 +1,6 @@
 import os
 from datetime import datetime
 import json
-import tkinter as tk
 
 
 LISTA_ESTABLECIMIENTOS = [
@@ -173,37 +172,61 @@ LISTA_ESTABLECIMIENTOS = [
     },
 ]
 
+# Nombre del archivo donde se guardan las preferencias y los credenciales
+CREDENTIALS_FILE_NAME = "credentials.json"
+# Imprime el total de establecimientos disponibles para elegir
 print(f"Número de Establecimientos totales: {len(LISTA_ESTABLECIMIENTOS)}")
+# Indica el directorio donde se descargan los archivos
 DOWNLOADED_DIR = os.path.join(os.getcwd(), "downloaded_data")
 
-# Registro diario variables
+# Indica el directorio donde se descargan los archivos de Registro Diario
 DIR_REGISTRO_DIARIO = os.path.join(DOWNLOADED_DIR, "Registro_Diario")
+# Indica el nombre que tendrá el archivo de Registro Diario ya procesado
 DOWNLOADED_DIR_REGISTRO_DIARIO = os.path.join(
     DIR_REGISTRO_DIARIO,
     f"Registro_Diario_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}/",
 )
-DOWNLOADED_DIR_REGISTRO_DIARIO = os.path.join(
-    DIR_REGISTRO_DIARIO,
-    f"Registro_Diario_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}/",
-)
+
+# Indica el directorio donde se encuentra el archivo de Plantilla para Registro Diario
 DIR_PLANTILLA_REGISTRO_DIARIO = os.path.join(
     os.getcwd(), "Plantilla_Registro_Diario.xlsx"
 )
+# Indica el nombre de la hoja de la Plantilla para Registro Diario
 REGISTRO_DIARIO_BASE_SHEET_NAME = "BASE"
 
 
 # Credenciales
+
 try:
-    data = json.loads(open("credentials.json").read())
+    # intentar abrir el archivo de credenciales y extraer las credenciales del archivo
+    data = json.loads(open(CREDENTIALS_FILE_NAME).read())
     USERNAME = data["username"]
     PASSWORD = data["password"]
     ESTABLECIMIENTOS = data["establecimientos"]
     ESTABLECIMIENTO_LOGIN = data["establecimiento_login"]
     print(f"Número de Establecimientos en la lista: {len(ESTABLECIMIENTOS)}")
 except FileNotFoundError:
-    tk.messagebox.showerror("Error", "No se encontró el archivo credentials.json")
+    # si no se encuentra el archivo de credenciales, crear uno nuevo
+    with open(CREDENTIALS_FILE_NAME, "x+t") as f:
+        json.dump(
+            {
+                "username": "",
+                "password": "",
+                "establecimiento_login": "",
+                "establecimientos": [],
+            },
+            f,
+        )
+    # cargar las credenciales del archivo
+    data = json.loads(open(CREDENTIALS_FILE_NAME).read())
+    USERNAME = data["username"]
+    PASSWORD = data["password"]
+    ESTABLECIMIENTOS = data["establecimientos"]
+    ESTABLECIMIENTO_LOGIN = data["establecimiento_login"]
+    print(f"Número de Establecimientos en la lista: {len(ESTABLECIMIENTOS)}")
 
 
+# le da nombre a los archivos de Registro Diario descargados y guardados en el directorio de Registro Diario
 def downloaded_dir_registro_diario_with_start_end(start, end):
     return os.path.join(
         DIR_REGISTRO_DIARIO,

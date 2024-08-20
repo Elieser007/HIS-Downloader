@@ -13,6 +13,7 @@ from variables import (
     ESTABLECIMIENTO_LOGIN,
     ESTABLECIMIENTOS,
     LISTA_ESTABLECIMIENTOS,
+    CREDENTIALS_FILE_NAME,
 )
 import json
 from ttkwidgets import CheckboxTreeview
@@ -74,7 +75,7 @@ with sync_playwright() as playwright:
     combo_box.pack()
 
     def save_credentials(ventana, username_var, password_var, combo_box, tree):
-        with open("credentials.json", "w") as f:
+        with open(CREDENTIALS_FILE_NAME, "w") as f:
             json.dump(
                 {
                     "username": username_var.get(),
