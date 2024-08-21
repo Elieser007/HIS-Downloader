@@ -65,6 +65,17 @@ with sync_playwright() as playwright:
             text=est["nombre_establecimiento"],
         )
     tree.pack()
+
+    if len(ESTABLECIMIENTOS) == len(LISTA_ESTABLECIMIENTOS):
+        tree.change_state("todos", state="checked")
+    elif (
+        len(ESTABLECIMIENTOS) < len(LISTA_ESTABLECIMIENTOS)
+        and len(ESTABLECIMIENTOS) > 0
+    ):
+        tree.change_state("todos", state="tristate")
+    else:
+        tree.change_state("todos", state="unchecked")
+
     for est in ESTABLECIMIENTOS:
         tree.change_state(est, state="checked")
 
