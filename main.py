@@ -1,4 +1,5 @@
 import tkinter as tk
+import subprocess
 
 from playwright.sync_api import sync_playwright
 
@@ -14,6 +15,7 @@ from variables import (
     ESTABLECIMIENTOS,
     LISTA_ESTABLECIMIENTOS,
     CREDENTIALS_FILE_NAME,
+    DOWNLOADED_DIR,
 )
 import json
 from ttkwidgets import CheckboxTreeview
@@ -37,6 +39,13 @@ with sync_playwright() as playwright:
         pady=4,
         text="Re-Crear Base Registro Diario",
         command=lambda: form_crear_base_registro_diario(),
+    ).pack()
+
+    tk.Button(
+        ventana,
+        pady=4,
+        text="Abrit Carpeta de Archivos Descargados",
+        command=lambda: subprocess.Popen(f"explorer {DOWNLOADED_DIR}"),
     ).pack()
 
     tk.Label(ventana, text="Credenciales de Acceso").pack(pady=15)
