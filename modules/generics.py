@@ -33,9 +33,15 @@ def login(page):
     page.get_by_placeholder("Contraseña").click()
     page.get_by_placeholder("Contraseña").fill(PASSWORD)
     time.sleep(2)
-    page.locator("i").click()
-    page.get_by_role("searchbox").fill(ESTABLECIMIENTO_LOGIN)
-    page.get_by_role("searchbox").press("Enter")
+    if page.locator("i").count() > 0:
+        page.locator("i").click()
+        page.get_by_role("searchbox").fill(ESTABLECIMIENTO_LOGIN)
+        page.get_by_role("searchbox").press("Enter")
+    else:
+        page.locator('//*[@id="form1"]/div[3]/select').click()
+        page.locator('//*[@id="form1"]/div[3]/select').select_option(
+            ESTABLECIMIENTO_LOGIN
+        )
     time.sleep(1)
     page.get_by_role("button", name="Ingresar").click()
 
