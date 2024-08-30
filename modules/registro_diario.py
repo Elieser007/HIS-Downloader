@@ -226,6 +226,7 @@ def unify_base_registro_diario(folder_selected):
     fila_copia_informe = 7
 
     column_number_format = [8, 11]
+    column_date_format=[1]
 
     files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO, folder_selected))
     desktop = os.path.join(os.path.join(os.environ["USERPROFILE"]), "Desktop")
@@ -245,6 +246,15 @@ def unify_base_registro_diario(folder_selected):
                         num_int = celda.value
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         num_int
+                    )
+                elif(celda.column in column_date_format):
+                    date_format=None
+                    try:
+                        date_format = datetime.strptime(celda.value, '%Y-%m-%d').date()
+                    except ValueError:
+                        date_format=celda.value
+                    ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
+                        date_format
                     )
                 else:
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
