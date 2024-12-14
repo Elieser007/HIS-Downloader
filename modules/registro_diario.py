@@ -67,10 +67,10 @@ def registro_diario_downloader(
             time.sleep(1)
 
             try:
-                with page.expect_download() as download_info:
+                with page.expect_download(timeout=1200000) as download_info:
                     page.frame_locator('frame[name="mainFrame"]').locator(
                         "#form1"
-                    ).get_by_role("img").click(timeout=300000)
+                    ).get_by_role("img").click()
                 download = download_info.value
             except:
                 login(page)
@@ -89,10 +89,10 @@ def registro_diario_downloader(
                     "button", name="Generar"
                 ).click()
                 time.sleep(1)
-                with page.expect_download() as download_info:
+                with page.expect_download(timeout=1200000) as download_info:
                     page.frame_locator('frame[name="mainFrame"]').locator(
                         "#form1"
-                    ).get_by_role("img").click(timeout=300000)
+                    ).get_by_role("img").click()
                 download = download_info.value
 
             download.save_as(SAVE_AS_DOWNLOAD + download.suggested_filename)
