@@ -44,7 +44,7 @@ with sync_playwright() as playwright:
     tk.Button(
         ventana,
         pady=4,
-        text="Abrit Carpeta de Archivos Descargados",
+        text="Abrir Carpeta de Archivos Descargados",
         command=lambda: subprocess.Popen(f"explorer {DOWNLOADED_DIR}"),
     ).pack()
 
