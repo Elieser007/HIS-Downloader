@@ -161,7 +161,7 @@ def form_download_registro_diario(playwright):
         root,
         selectforeground="white",
         selectbackground="red",
-        locale="es_ES",
+        locale="es",
     )
     start_date.pack()
 
@@ -171,7 +171,7 @@ def form_download_registro_diario(playwright):
         root,
         selectforeground="white",
         selectbackground="red",
-        locale="es_ES",
+        locale="es",
     )
     end_date.pack()
 
