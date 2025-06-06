@@ -42,6 +42,7 @@ def login(page):
         page.locator('#normal-establecimiento').select_option(
             ESTABLECIMIENTO_LOGIN
         )
+        page.locator('#normal-establecimiento').press("Enter")
     time.sleep(2)
     page.get_by_role("button", name="Ingresar").click()
 
