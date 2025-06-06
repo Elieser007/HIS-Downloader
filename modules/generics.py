@@ -28,18 +28,18 @@ def divide_range_in_days(start_date: str, end_date: str):
 
 
 def login(page):
-    page.get_by_placeholder("Usuario").click()
-    page.get_by_placeholder("Usuario").fill(USERNAME)
-    page.get_by_placeholder("Contraseña").click()
-    page.get_by_placeholder("Contraseña").fill(PASSWORD)
+    page.locator("#normal-login-codigo-usuario").click()
+    page.locator("#normal-login-codigo-usuario").fill(USERNAME)
+    page.locator("#normal-login-password").click()
+    page.locator("#normal-login-password").fill(PASSWORD)
     time.sleep(2)
-    if page.locator("i").count() > 0:
-        page.locator("i").click()
+    if page.locator("#select2-normal-establecimiento-container").count() > 0:
+        page.locator("#select2-normal-establecimiento-container").click()
         page.get_by_role("searchbox").fill(ESTABLECIMIENTO_LOGIN)
         page.get_by_role("searchbox").press("Enter")
     else:
-        page.locator('//*[@id="form1"]/div[3]/select').click()
-        page.locator('//*[@id="form1"]/div[3]/select').select_option(
+        page.locator('#select2-normal-establecimiento-container').click()
+        page.locator('#select2-normal-establecimiento-container').select_option(
             ESTABLECIMIENTO_LOGIN
         )
     time.sleep(1)
