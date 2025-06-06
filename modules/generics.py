@@ -32,17 +32,17 @@ def login(page):
     page.locator("#normal-login-codigo-usuario").fill(USERNAME)
     page.locator("#normal-login-password").click()
     page.locator("#normal-login-password").fill(PASSWORD)
-    time.sleep(2)
+    time.sleep(3)
     if page.locator("#select2-normal-establecimiento-container").count() > 0:
         page.locator("#select2-normal-establecimiento-container").click()
         page.get_by_role("searchbox").fill(ESTABLECIMIENTO_LOGIN)
         page.get_by_role("searchbox").press("Enter")
     else:
-        page.locator('#select2-normal-establecimiento-container').click()
-        page.locator('#select2-normal-establecimiento-container').select_option(
+        page.locator('#normal-establecimiento').click()
+        page.locator('#normal-establecimiento').select_option(
             ESTABLECIMIENTO_LOGIN
         )
-    time.sleep(1)
+    time.sleep(2)
     page.get_by_role("button", name="Ingresar").click()
 
 
