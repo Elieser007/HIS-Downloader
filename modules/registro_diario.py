@@ -225,7 +225,7 @@ def unify_base_registro_diario(folder_selected):
     INFORME_REGISTRO_DIARIO_SHEET_NAME = "reporte_registro_diario_consult"
     fila_copia_informe = 7
 
-    column_number_format = [8, 11]
+    column_number_format = [9, 12]
     column_date_format=[1]
 
     files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO, folder_selected))
