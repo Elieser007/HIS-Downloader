@@ -24,8 +24,10 @@ from ttkwidgets.autocomplete import AutocompleteCombobox
 
 with sync_playwright() as playwright:
     ventana = tk.Tk()
-    ventana.geometry("300x600")
+    ventana.geometry("300x700")
     ventana.title("Selector de Opciones")
+
+    tk.Label(ventana, text="⚠️Importante!!!\nEl HIS solo habilita 5 registros diarios por mes\ndesde junio del 2025, si hace ENOS\nsolo podra hacer 5 en 1 mes, se\nle recomienda solo usarlo cada semana hasta\nque se encuentre una solución.",background="red",foreground="white").pack()
 
     tk.Button(
         ventana,
