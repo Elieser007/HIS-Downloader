@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 from variables import (
-    ESTABLECIMIENTOS,
+    LISTA_ESTABLECIMIENTOS_AVANZADO,
     DIR_REGISTRO_DIARIO_AVANZADO,
     DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO,
     REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME,
@@ -20,14 +20,16 @@ from openpyxl import load_workbook
 from modules.generics import divide_range_in_days, login
 
 
-def get_form_registro_diario(page):
-    page.frame_locator('frame[name="menuFrame"]').get_by_text("Reportes").click()
+def get_form_registro_diario_avanzado(page):
+    page.frame_locator('frame[name="menuFrame"]').get_by_text(
+        "Informe Avanzado"
+    ).click()
     page.frame_locator('frame[name="menuFrame"]').get_by_role(
-        "link", name="▾ Registro Diario de Consultas"
+        "link", name="▾ Registro Diario de Consultas Region"
     ).click()
 
 
-def registro_diario_downloader(
+def registro_diario_avanzado_downloader(
     playwright: Playwright, startDate, endDate, seleccionados, diag_new, unify_base
 ):
     browser = playwright.chromium.launch(headless=False)
@@ -35,9 +37,11 @@ def registro_diario_downloader(
     page = context.new_page()
     page.goto("https://hisguaira.mspbs.gov.py/ambulatoria/")
     login(page)
-    get_form_registro_diario(page)
+    get_form_registro_diario_avanzado(page)
     date_range = divide_range_in_days(startDate, endDate)
-    SAVE_AS_DOWNLOAD = downloaded_dir_registro_diario_avanzado_with_start_end(startDate, endDate)
+    SAVE_AS_DOWNLOAD = downloaded_dir_registro_diario_avanzado_with_start_end(
+        startDate, endDate
+    )
 
     for selected in seleccionados:
         page.frame_locator('frame[name="mainFrame"]').locator(
@@ -74,7 +78,7 @@ def registro_diario_downloader(
                 download = download_info.value
             except:
                 login(page)
-                get_form_registro_diario(page)
+                get_form_registro_diario_avanzado(page)
                 page.frame_locator('frame[name="mainFrame"]').locator(
                     'input[name="startDate"]'
                 ).fill(date[0])
@@ -101,13 +105,13 @@ def registro_diario_downloader(
     context.close()
     browser.close()
     if unify_base:
-        unify_base_registro_diario(SAVE_AS_DOWNLOAD)
+        unify_base_registro_diario_avanzado(SAVE_AS_DOWNLOAD)
 
 
-def form_download_registro_diario(playwright):
+def form_download_registro_diario_avanzado(playwright):
     root = tk.Tk()
     root.geometry("600x500")
-    root.title("Descargar Registro Diario")
+    root.title("Descargar Registro Diario Avanzado")
     global diag_new
     diag_new = False
     global unify_base
@@ -156,13 +160,31 @@ def form_download_registro_diario(playwright):
     tree_label.pack()
     tree = CheckboxTreeview(frame_izquierda)
     tree.insert("", "end", "todos", text="Seleccionar Todos")
-    for est in ESTABLECIMIENTOS:
+    for dep in LISTA_ESTABLECIMIENTOS_AVANZADO:
+        print(dep["departamento"])
         tree.insert(
             "todos",
             "end",
-            est,
-            text=est,
+            f"dep_{dep['departamento']}",
+            text=dep["departamento"],
         )
+        for dist in dep["distritos"]:
+            print(dist["distrito"])
+            tree.insert(
+                f"dep_{dep['departamento']}",
+                "end",
+                f"dist_{dist['distrito']}",
+                text=dist["distrito"],
+            )
+            for est in dist['establecimientos']:
+                print(est["text"])
+                tree.insert(
+                f"dist_{dist['distrito']}",
+                "end",
+                f"{dist['distrito']}_{est['text']}",
+                text=est["text"],
+            )
+
     tree.pack()
 
     def def_diag_new():
@@ -226,13 +248,13 @@ def form_download_registro_diario(playwright):
     seleccionados = tree.get_checked()
     start_selected = str(start_date.selection).split(" ")[0]
     end_selected = str(end_date.selection).split(" ")[0]
-    registro_diario_downloader(
+    registro_diario_avanzado_downloader(
         playwright, start_selected, end_selected, seleccionados, diag_new, unify_base
     )
     root.quit()
 
 
-def form_crear_base_registro_diario():
+def form_crear_base_registro_diario_avanzado():
     root = tk.Tk()
     root.geometry("400x200")
     path_dir = os.scandir(DIR_REGISTRO_DIARIO_AVANZADO)
@@ -246,15 +268,15 @@ def form_crear_base_registro_diario():
     tk.Button(
         root,
         pady=2,
-        text="Crear Base de Registro Diario",
+        text="Crear Base de Registro Diario Avanzado",
         command=lambda: root.quit(),
     ).pack(pady=5)
     root.mainloop()
-    unify_base_registro_diario(combo_box.get())
+    unify_base_registro_diario_avanzado(combo_box.get())
     root.quit()
 
 
-def unify_base_registro_diario(folder_selected):
+def unify_base_registro_diario_avanzado(folder_selected):
 
     wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO)
     ws_base = wb_base[REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME]
@@ -263,19 +285,19 @@ def unify_base_registro_diario(folder_selected):
 
     ultimo_insertado = fila_insercion_base
 
-    INFORME_REGISTRO_DIARIO_SHEET_NAME = "reporte_registro_diario_consult"
+    INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME = "reporte_registro_diario_consult"
     fila_copia_informe = 7
 
-    column_number_format = [9, 12]
-    column_date_format=[1]
+    column_number_format = [11]
+    column_date_format = [1]
 
     files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO_AVANZADO, folder_selected))
     desktop = os.path.join(os.path.join(os.environ["USERPROFILE"]), "Desktop")
     for file in files:
         wb = load_workbook(file.path)
-        ws = wb[INFORME_REGISTRO_DIARIO_SHEET_NAME]
+        ws = wb[INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME]
 
-        filas = ws[f"A{fila_copia_informe}":f"BX{ws.max_row}"]
+        filas = ws[f"A{fila_copia_informe}" :f"BX{ws.max_row}"]
 
         for fila in filas:
             for celda in fila:
@@ -288,12 +310,12 @@ def unify_base_registro_diario(folder_selected):
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         num_int
                     )
-                elif(celda.column in column_date_format):
-                    date_format=None
+                elif celda.column in column_date_format:
+                    date_format = None
                     try:
-                        date_format = datetime.strptime(celda.value, '%Y-%m-%d').date()
+                        date_format = datetime.strptime(celda.value, "%Y-%m-%d").date()
                     except ValueError:
-                        date_format=celda.value
+                        date_format = celda.value
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         date_format
                     )
@@ -308,7 +330,7 @@ def unify_base_registro_diario(folder_selected):
     wb_base.save(
         os.path.join(
             desktop,
-            f"Registro_Diario_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs.xlsx'))}",
+            f"Registro_Diario_Avanzado_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs.xlsx'))}",
         )
     )
     wb_base.close()
