@@ -608,12 +608,12 @@ print(f"Número de Establecimientos totales: {len(LISTA_ESTABLECIMIENTOS)}")
 DOWNLOADED_DIR = os.path.join(os.getcwd(), "downloaded_data")
 
 # Indica el directorio donde se descargan los archivos de Registro Diario
-DIR_REGISTRO_DIARIO_AVANZADO = os.path.join(DOWNLOADED_DIR, "Registro_Diario")
+DIR_REGISTRO_DIARIO = os.path.join(DOWNLOADED_DIR, "Registro_Diario")
 # Indica el directorio donde se descargan los archivos de Registro Diario Avanzado
 DIR_REGISTRO_DIARIO_AVANZADO = os.path.join(DOWNLOADED_DIR, "Registro_Diario_Avanzado")
 # Indica el nombre que tendrá el archivo de Registro Diario ya procesado
 DOWNLOADED_DIR_REGISTRO_DIARIO = os.path.join(
-    DIR_REGISTRO_DIARIO_AVANZADO,
+    DIR_REGISTRO_DIARIO,
     f"Registro_Diario_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}/",
 )
 # Indica el nombre que tendrá el archivo de Registro Diario Avanzado ya procesado
@@ -623,7 +623,7 @@ DOWNLOADED_DIR_REGISTRO_DIARIO_AVANZADO = os.path.join(
 )
 
 # Indica el directorio donde se encuentra el archivo de Plantilla para Registro Diario
-DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO = os.path.join(
+DIR_PLANTILLA_REGISTRO_DIARIO = os.path.join(
     os.getcwd(), "Plantilla_Registro_Diario.xlsx"
 )
 # Indica el directorio donde se encuentra el archivo de Plantilla para Registro Diario Avanzado
@@ -631,7 +631,7 @@ DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO = os.path.join(
     os.getcwd(), "Plantilla_Registro_Diario_Avanzado.xlsx"
 )
 # Indica el nombre de la hoja de la Plantilla para Registro Diario
-REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME = "BASE"
+REGISTRO_DIARIO_BASE_SHEET_NAME = "BASE"
 # Indica el nombre de la hoja de la Plantilla para Registro Diario Avanzado
 REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME = "BASE"
 
@@ -668,9 +668,9 @@ except FileNotFoundError:
 
 
 # le da nombre a los archivos de Registro Diario descargados y guardados en el directorio de Registro Diario
-def downloaded_dir_registro_diario_avanzado_with_start_end(start, end):
+def downloaded_dir_registro_diario_with_start_end(start, end):
     return os.path.join(
-        DIR_REGISTRO_DIARIO_AVANZADO,
+        DIR_REGISTRO_DIARIO,
         f"Registro_Diario_{start}_{end}_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}/",
     )
 

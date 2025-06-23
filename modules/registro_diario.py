@@ -1,14 +1,15 @@
 import os
 import time
+import locale
 
 from datetime import datetime
 
 from variables import (
     ESTABLECIMIENTOS,
-    DIR_REGISTRO_DIARIO_AVANZADO,
-    DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO,
-    REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME,
-    downloaded_dir_registro_diario_avanzado_with_start_end,
+    DIR_REGISTRO_DIARIO,
+    DIR_PLANTILLA_REGISTRO_DIARIO,
+    REGISTRO_DIARIO_BASE_SHEET_NAME,
+    downloaded_dir_registro_diario_with_start_end,
 )
 
 import tkinter as tk
@@ -17,7 +18,7 @@ from ttkwidgets.autocomplete import AutocompleteCombobox
 from playwright.sync_api import Playwright
 from openpyxl import load_workbook
 
-from modules.generics import divide_range_in_days, login
+from modules.generics import divide_range_in_days, login, get_desktop_path
 
 
 def get_form_registro_diario(page):
@@ -37,7 +38,7 @@ def registro_diario_downloader(
     login(page)
     get_form_registro_diario(page)
     date_range = divide_range_in_days(startDate, endDate)
-    SAVE_AS_DOWNLOAD = downloaded_dir_registro_diario_avanzado_with_start_end(startDate, endDate)
+    SAVE_AS_DOWNLOAD = downloaded_dir_registro_diario_with_start_end(startDate, endDate)
 
     for selected in seleccionados:
         page.frame_locator('frame[name="mainFrame"]').locator(
@@ -124,7 +125,7 @@ def form_download_registro_diario(playwright):
         height=300,
         highlightbackground="gray",
         highlightthickness=1,
-        pady=5
+        pady=5,
     )
     # grid(row, column) - colocamos el frame en la fila 0, columna 0
     frame_izquierda.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
@@ -136,7 +137,7 @@ def form_download_registro_diario(playwright):
         height=300,
         highlightbackground="gray",
         highlightthickness=1,
-        pady=5
+        pady=5,
     )
     # grid(row, column) - colocamos el frame en la fila 0, columna 1
     frame_derecha.grid(row=0, column=1, sticky="nsew", padx=10, pady=5)
@@ -148,7 +149,7 @@ def form_download_registro_diario(playwright):
         height=300,
         highlightbackground="gray",
         highlightthickness=1,
-        pady=5
+        pady=5,
     )
     # grid(row, column) - colocamos el frame en la fila 1, columna 0,1
     frame_central.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
@@ -202,7 +203,7 @@ def form_download_registro_diario(playwright):
         frame_derecha,
         selectforeground="white",
         selectbackground="red",
-        locale="es",
+        locale=locale.getdefaultlocale()[0] or "es",
     )
     start_date.pack()
 
@@ -212,7 +213,7 @@ def form_download_registro_diario(playwright):
         frame_derecha,
         selectforeground="white",
         selectbackground="red",
-        locale="es",
+        locale=locale.getdefaultlocale()[0] or "es",
     )
     end_date.pack()
 
@@ -235,7 +236,7 @@ def form_download_registro_diario(playwright):
 def form_crear_base_registro_diario():
     root = tk.Tk()
     root.geometry("400x200")
-    path_dir = os.scandir(DIR_REGISTRO_DIARIO_AVANZADO)
+    path_dir = os.scandir(DIR_REGISTRO_DIARIO)
     list_values = []
     for path in path_dir:
         list_values.append(path.name)
@@ -256,8 +257,8 @@ def form_crear_base_registro_diario():
 
 def unify_base_registro_diario(folder_selected):
 
-    wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO)
-    ws_base = wb_base[REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME]
+    wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO)
+    ws_base = wb_base[REGISTRO_DIARIO_BASE_SHEET_NAME]
 
     fila_insercion_base = 3
 
@@ -267,15 +268,15 @@ def unify_base_registro_diario(folder_selected):
     fila_copia_informe = 7
 
     column_number_format = [9, 12]
-    column_date_format=[1]
+    column_date_format = [1]
 
-    files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO_AVANZADO, folder_selected))
-    desktop = os.path.join(os.path.join(os.environ["USERPROFILE"]), "Desktop")
+    files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO, folder_selected))
+    desktop = get_desktop_path()
     for file in files:
         wb = load_workbook(file.path)
         ws = wb[INFORME_REGISTRO_DIARIO_SHEET_NAME]
 
-        filas = ws[f"A{fila_copia_informe}":f"BX{ws.max_row}"]
+        filas = ws[f"A{fila_copia_informe}" :f"BX{ws.max_row}"]
 
         for fila in filas:
             for celda in fila:
@@ -288,12 +289,12 @@ def unify_base_registro_diario(folder_selected):
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         num_int
                     )
-                elif(celda.column in column_date_format):
-                    date_format=None
+                elif celda.column in column_date_format:
+                    date_format = None
                     try:
-                        date_format = datetime.strptime(celda.value, '%Y-%m-%d').date()
+                        date_format = datetime.strptime(celda.value, "%Y-%m-%d").date()
                     except ValueError:
-                        date_format=celda.value
+                        date_format = celda.value
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         date_format
                     )

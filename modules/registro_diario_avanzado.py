@@ -1,5 +1,6 @@
 import os
 import time
+import locale
 
 from datetime import datetime
 
@@ -17,7 +18,7 @@ from ttkwidgets.autocomplete import AutocompleteCombobox
 from playwright.sync_api import Playwright
 from openpyxl import load_workbook
 
-from modules.generics import divide_range_in_days, login
+from modules.generics import divide_range_in_days, login, get_desktop_path
 
 
 def get_form_registro_diario_avanzado(page):
@@ -128,7 +129,7 @@ def form_download_registro_diario_avanzado(playwright):
         height=300,
         highlightbackground="gray",
         highlightthickness=1,
-        pady=5
+        pady=5,
     )
     # grid(row, column) - colocamos el frame en la fila 0, columna 0
     frame_izquierda.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
@@ -140,7 +141,7 @@ def form_download_registro_diario_avanzado(playwright):
         height=300,
         highlightbackground="gray",
         highlightthickness=1,
-        pady=5
+        pady=5,
     )
     # grid(row, column) - colocamos el frame en la fila 0, columna 1
     frame_derecha.grid(row=0, column=1, sticky="nsew", padx=10, pady=5)
@@ -152,7 +153,7 @@ def form_download_registro_diario_avanzado(playwright):
         height=300,
         highlightbackground="gray",
         highlightthickness=1,
-        pady=5
+        pady=5,
     )
     # grid(row, column) - colocamos el frame en la fila 1, columna 0,1
     frame_central.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
@@ -176,14 +177,14 @@ def form_download_registro_diario_avanzado(playwright):
                 f"dist_{dist['distrito']}",
                 text=dist["distrito"],
             )
-            for est in dist['establecimientos']:
+            for est in dist["establecimientos"]:
                 print(est["text"])
                 tree.insert(
-                f"dist_{dist['distrito']}",
-                "end",
-                f"{dist['distrito']}_{est['text']}",
-                text=est["text"],
-            )
+                    f"dist_{dist['distrito']}",
+                    "end",
+                    f"{dist['distrito']}_{est['text']}",
+                    text=est["text"],
+                )
 
     tree.pack()
 
@@ -224,7 +225,7 @@ def form_download_registro_diario_avanzado(playwright):
         frame_derecha,
         selectforeground="white",
         selectbackground="red",
-        locale="es",
+        locale=locale.getdefaultlocale()[0] or "es",
     )
     start_date.pack()
 
@@ -234,7 +235,7 @@ def form_download_registro_diario_avanzado(playwright):
         frame_derecha,
         selectforeground="white",
         selectbackground="red",
-        locale="es",
+        locale=locale.getdefaultlocale()[0] or "es",
     )
     end_date.pack()
 
@@ -292,7 +293,7 @@ def unify_base_registro_diario_avanzado(folder_selected):
     column_date_format = [1]
 
     files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO_AVANZADO, folder_selected))
-    desktop = os.path.join(os.path.join(os.environ["USERPROFILE"]), "Desktop")
+    desktop = get_desktop_path()
     for file in files:
         wb = load_workbook(file.path)
         ws = wb[INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME]

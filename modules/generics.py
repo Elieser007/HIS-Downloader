@@ -1,3 +1,5 @@
+import os
+import platform
 import time
 import datetime
 
@@ -38,11 +40,9 @@ def login(page):
         page.get_by_role("searchbox").fill(ESTABLECIMIENTO_LOGIN)
         page.get_by_role("searchbox").press("Enter")
     else:
-        page.locator('#normal-establecimiento').click()
-        page.locator('#normal-establecimiento').select_option(
-            ESTABLECIMIENTO_LOGIN
-        )
-        page.locator('#normal-establecimiento').press("Enter")
+        page.locator("#normal-establecimiento").click()
+        page.locator("#normal-establecimiento").select_option(ESTABLECIMIENTO_LOGIN)
+        page.locator("#normal-establecimiento").press("Enter")
     time.sleep(2)
     page.get_by_role("button", name="Ingresar").click()
 
@@ -52,3 +52,20 @@ def logout(page):
     page.frame_locator('frame[name="mainFrame"]').get_by_role(
         "link", name=" Salir"
     ).click()
+
+
+def get_desktop_path():
+    system = platform.system()
+
+    if system == "Windows":
+        # Soporta Windows
+        path = os.path.join(os.environ["USERPROFILE"], "Desktop")
+        if not os.path.exists(path):
+            path = os.path.join(os.environ["USERPROFILE"], "Escritorio")
+        return path
+    else:
+        # Soporta Linux y macOS
+        path = os.path.join(os.path.expanduser("~"), "Desktop")
+        if not os.path.exists(path):
+            path = os.path.join(os.path.expanduser("~"), "Escritorio")
+        return path

@@ -28,7 +28,7 @@ from ttkwidgets.autocomplete import AutocompleteCombobox
 
 with sync_playwright() as playwright:
     ventana = tk.Tk()
-    ventana.geometry("600x700")
+    ventana.geometry("800x700")
     ventana.title("Selector de Opciones")
     # --- Configuración de columnas (opcional pero recomendado para control de redimensionamiento) ---
     ventana.grid_columnconfigure(0, weight=1)  # Columna 0 (izquierda) se expande
@@ -74,7 +74,7 @@ with sync_playwright() as playwright:
 
     tk.Label(
         frame_izquierda,
-        text="⚠️Importante!!!\nEl HIS solo habilita 5 registros diarios por mes\ndesde junio del 2025, si hace ENOS\nsolo podra hacer 5 en 1 mes, se\nle recomienda solo usarlo cada semana hasta\nque se encuentre una solución.",
+        text="⚠️Importante!!!\nEl HIS solo habilita 5 registros diarios por mes, se\nle recomienda solo usarlo cada semana.",
         background="red",
         foreground="white",
     ).pack()
