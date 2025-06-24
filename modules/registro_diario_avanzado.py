@@ -30,6 +30,140 @@ def get_form_registro_diario_avanzado(page):
     ).click()
 
 
+def get_establecimientos(seleccionados, establecimientos, distrito):
+    ESTABLECIMIENTOS_SELECCIONADOS = []
+    TOTAL_ESTABLECIMIENTOS = len(establecimientos)
+    for est in establecimientos:
+        if f"{distrito}_{est['text']}" in seleccionados:
+            ESTABLECIMIENTOS_SELECCIONADOS.append(est)
+    if len(ESTABLECIMIENTOS_SELECCIONADOS) == TOTAL_ESTABLECIMIENTOS:
+        return True
+    if len(ESTABLECIMIENTOS_SELECCIONADOS) == 0:
+        return False
+    return ESTABLECIMIENTOS_SELECCIONADOS
+
+
+def get_selected_data(seleccionados):
+    # Variable para almacenar los departamentos y distritos seleccionados
+    # y los establecimientos seleccionados
+    SELECTED = []
+    # Iteramos sobre la lista de establecimientos avanzados
+    for dep in LISTA_ESTABLECIMIENTOS_AVANZADO:
+        # Inicializamos la lista de departamentos y distritos seleccionados
+        DISTRITO = []
+        # Inicializamos la variable para saber si se seleccionaron todos los
+        # establecimientos de un distrito empezamos con True
+        ALL_DISTRITO = True
+        # Iteramos sobre los distritos de cada departamento
+        for dist in dep["distritos"]:
+            # Obtenemos los el estado de los establecimientos seleccionados
+            # True si se seleccionaron todos
+            # False si no se seleccionó ninguno
+            # Lista de establecimientos seleccionados si se seleccionaron algunos
+            status = get_establecimientos(
+                seleccionados, dist["establecimientos"], dist["distrito"]
+            )
+            # Si el estado es True, significa que se seleccionaron todos establecimientos
+            if status is True:
+                # Agregamos el distrito que están seleccionado con todos los
+                # establecimientos
+                DISTRITO.append(
+                    {"distrito": dist["distrito"], "establecimientos": "ALL"}
+                )
+            # Si el estado es False, significa que no se seleccionó ningún establecimiento
+            elif status is False:
+                # Cambiamos la variable ALL_DISTRITO a False
+                # si pasa una vez por esta condición ya se queda en False para este distrito
+                ALL_DISTRITO = False
+                # y no se agrega el distrito a la lista de distritos seleccionados
+                continue
+            # Si el estado es una lista, significa que se seleccionaron algunos establecimientos
+            else:
+                # Cambiamos la variable ALL_DISTRITO a False
+                # si pasa una vez por esta condición ya se queda en False para este distrito
+                ALL_DISTRITO = False
+                # y SI se agrega el distrito la lista y sus establecimientos seleccionados
+                DISTRITO.append(
+                    {
+                        "distrito": dist["distrito"],
+                        "establecimientos": [est["text"] for est in status],
+                    }
+                )
+        # Agregamos el departamento y sus distritos seleccionados a la lista de SELECTED
+        SELECTED.append(
+            {
+                "departamento": dep["departamento"],
+                # Si ALL_DISTRITO es True, significa que se seleccionaron todos los distritos sino se agrega la lista de distritos seleccionados
+                "distritos": "ALL" if ALL_DISTRITO else DISTRITO,
+            }
+        )
+    return SELECTED
+
+
+def select_departamento(page, departamento):
+    time.sleep(1)
+    page.locator('frame[name="mainFrame"]').content_frame.locator(
+        "#reporte_codigo_departamento"
+    ).select_option(departamento)
+    time.sleep(1)
+
+
+def select_distrito(page, distrito):
+    time.sleep(1)
+    page.locator('frame[name="mainFrame"]').content_frame.locator(
+        "#reporte_codigo_distrito"
+    ).select_option(distrito)
+    time.sleep(1)
+
+
+def select_establecimiento(page, establecimiento):
+    time.sleep(1)
+    page.locator('frame[name="mainFrame"]').content_frame.locator(
+        "#reporte_codigo_establecimiento"
+    ).select_option(establecimiento)
+    time.sleep(1)
+
+
+def download_loop(page, date_range, diag_new, SAVE_AS_DOWNLOAD):
+    # Recorremos el rango de fechas
+    for date in date_range:
+        # Asignamos la fecha de inicio
+        page.locator('frame[name="mainFrame"]').content_frame.locator(
+            'input[name="startDate"]'
+        ).fill(date[0])
+        # Asignamos la fecha de fin
+        page.locator('frame[name="mainFrame"]').content_frame.locator(
+            'input[name="endDate"]'
+        ).fill(date[1])
+        # si diagnostico nuevo se seleccionó
+        if diag_new:
+            # seleccionamos el radio button de diagnostico nuevo
+            page.locator('frame[name="mainFrame"]').content_frame.get_by_role(
+                "radio", name="Si"
+            ).nth(1).check()
+        time.sleep(1)
+        print("--------------------------------------------------")
+        print("Fechas=" + date[0] + " - " + date[1])
+        print("--------------------------------------------------")
+
+        # Hacemos click en el botón de generar
+        page.locator('frame[name="mainFrame"]').content_frame.get_by_role(
+            "button", name="Generar"
+        ).click()
+        time.sleep(1)
+        # Activamos la espera de descarga
+        with page.expect_download(timeout=1200000) as download_info:
+            # Hacemos click en el botón de descargar
+            page.frame_locator('frame[name="mainFrame"]').locator("#form1").get_by_role(
+                "img"
+            ).click()
+        # Obtenemos la información de la descarga
+        download = download_info.value
+        # Guardamos el archivo descargado en la carpeta especificada
+        download.save_as(SAVE_AS_DOWNLOAD + download.suggested_filename)
+        time.sleep(3)
+
+
 def registro_diario_avanzado_downloader(
     playwright: Playwright, startDate, endDate, seleccionados, diag_new, unify_base
 ):
@@ -43,65 +177,28 @@ def registro_diario_avanzado_downloader(
     SAVE_AS_DOWNLOAD = downloaded_dir_registro_diario_avanzado_with_start_end(
         startDate, endDate
     )
+    SELECTED = get_selected_data(seleccionados)
 
-    for selected in seleccionados:
-        page.frame_locator('frame[name="mainFrame"]').locator(
-            '//*[@id="form1"]/div/div[1]/div/span/span[1]/span/span[2]'
-        ).click()
-        time.sleep(1)
-        page.frame_locator('frame[name="mainFrame"]').get_by_role(
-            "option", name=selected, exact=True
-        ).click()
-        time.sleep(1)
-
-        for date in date_range:
-            page.frame_locator('frame[name="mainFrame"]').locator(
-                'input[name="startDate"]'
-            ).fill(date[0])
-            page.frame_locator('frame[name="mainFrame"]').locator(
-                'input[name="endDate"]'
-            ).fill(date[1])
-            if diag_new:
-                page.frame_locator('frame[name="mainFrame"]').get_by_label("Si").nth(
-                    1
-                ).check()
+    # Empezamos a recorrer la lista de SELECTED
+    for selected in SELECTED:
+        if selected["distritos"] == "ALL":
+            select_departamento(page, selected["departamento"])
+            print("Seleccionamos solo el departamento:", selected["departamento"])
             time.sleep(1)
-            page.frame_locator('frame[name="mainFrame"]').get_by_role(
-                "button", name="Generar"
-            ).click()
-            time.sleep(1)
-
-            try:
-                with page.expect_download(timeout=1200000) as download_info:
-                    page.frame_locator('frame[name="mainFrame"]').locator(
-                        "#form1"
-                    ).get_by_role("img").click()
-                download = download_info.value
-            except:
-                login(page)
-                get_form_registro_diario_avanzado(page)
-                page.frame_locator('frame[name="mainFrame"]').locator(
-                    'input[name="startDate"]'
-                ).fill(date[0])
-                page.frame_locator('frame[name="mainFrame"]').locator(
-                    'input[name="endDate"]'
-                ).fill(date[1])
-                if diag_new:
-                    page.frame_locator('frame[name="mainFrame"]').get_by_label(
-                        "Si"
-                    ).nth(1).check()
-                page.frame_locator('frame[name="mainFrame"]').get_by_role(
-                    "button", name="Generar"
-                ).click()
-                time.sleep(1)
-                with page.expect_download(timeout=1200000) as download_info:
-                    page.frame_locator('frame[name="mainFrame"]').locator(
-                        "#form1"
-                    ).get_by_role("img").click()
-                download = download_info.value
-
-            download.save_as(SAVE_AS_DOWNLOAD + download.suggested_filename)
-            time.sleep(3)
+            download_loop(page, date_range, diag_new, SAVE_AS_DOWNLOAD)
+        elif isinstance(selected["distritos"], list):
+            for dist in selected["distritos"]:
+                select_departamento(page, selected["departamento"])
+                if dist["establecimientos"] == "ALL":
+                    select_distrito(page, dist["distrito"])
+                    print("Seleccionamos solo el distrito", dist["distrito"])
+                    download_loop(page, date_range, diag_new, SAVE_AS_DOWNLOAD)
+                else:
+                    for est in dist["establecimientos"]:
+                        select_distrito(page, dist["distrito"])
+                        select_establecimiento(page, est)
+                        print("Seleccionamos el establecimiento", est)
+                        download_loop(page, date_range, diag_new, SAVE_AS_DOWNLOAD)
 
     context.close()
     browser.close()
@@ -162,7 +259,6 @@ def form_download_registro_diario_avanzado(playwright):
     tree = CheckboxTreeview(frame_izquierda)
     tree.insert("", "end", "todos", text="Seleccionar Todos")
     for dep in LISTA_ESTABLECIMIENTOS_AVANZADO:
-        print(dep["departamento"])
         tree.insert(
             "todos",
             "end",
@@ -170,7 +266,6 @@ def form_download_registro_diario_avanzado(playwright):
             text=dep["departamento"],
         )
         for dist in dep["distritos"]:
-            print(dist["distrito"])
             tree.insert(
                 f"dep_{dep['departamento']}",
                 "end",
@@ -178,7 +273,6 @@ def form_download_registro_diario_avanzado(playwright):
                 text=dist["distrito"],
             )
             for est in dist["establecimientos"]:
-                print(est["text"])
                 tree.insert(
                     f"dist_{dist['distrito']}",
                     "end",
