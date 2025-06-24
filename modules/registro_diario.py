@@ -164,7 +164,7 @@ def form_download_registro_diario(playwright):
             est,
             text=est,
         )
-    tree.pack()
+    tree.pack(ipadx=30,ipady=40)
 
     def def_diag_new():
         global diag_new

@@ -208,7 +208,7 @@ def registro_diario_avanzado_downloader(
 
 def form_download_registro_diario_avanzado(playwright):
     root = tk.Tk()
-    root.geometry("600x500")
+    root.geometry("700x500")
     root.title("Descargar Registro Diario Avanzado")
     global diag_new
     diag_new = False
@@ -280,7 +280,7 @@ def form_download_registro_diario_avanzado(playwright):
                     text=est["text"],
                 )
 
-    tree.pack()
+    tree.pack(ipadx=35,ipady=50)
 
     def def_diag_new():
         global diag_new
