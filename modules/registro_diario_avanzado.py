@@ -373,7 +373,7 @@ def form_crear_base_registro_diario_avanzado():
 
 def unify_base_registro_diario_avanzado(folder_selected):
 
-    wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO)
+    wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO,keep_vba=True)
     ws_base = wb_base[REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME]
 
     fila_insercion_base = 3
@@ -425,7 +425,7 @@ def unify_base_registro_diario_avanzado(folder_selected):
     wb_base.save(
         os.path.join(
             desktop,
-            f"Registro_Diario_Avanzado_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs.xlsx'))}",
+            f"Registro_Diario_Avanzado_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}.xlsm",
         )
     )
     wb_base.close()

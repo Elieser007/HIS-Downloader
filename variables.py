@@ -628,7 +628,7 @@ DIR_PLANTILLA_REGISTRO_DIARIO = os.path.join(
 )
 # Indica el directorio donde se encuentra el archivo de Plantilla para Registro Diario Avanzado
 DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO = os.path.join(
-    os.getcwd(), "Plantilla_Registro_Diario_Avanzado.xlsx"
+    os.getcwd(), "Plantilla_Registro_Diario_Avanzado.xlsm"
 )
 # Indica el nombre de la hoja de la Plantilla para Registro Diario
 REGISTRO_DIARIO_BASE_SHEET_NAME = "BASE"
