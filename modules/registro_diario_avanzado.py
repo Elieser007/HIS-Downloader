@@ -17,6 +17,7 @@ from ttkwidgets import CheckboxTreeview, Calendar
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from playwright.sync_api import Playwright
 from openpyxl import load_workbook
+import win32com.client as win32
 
 from modules.generics import divide_range_in_days, login, get_desktop_path
 
@@ -371,13 +372,49 @@ def form_crear_base_registro_diario_avanzado():
     root.quit()
 
 
-def unify_base_registro_diario_avanzado(folder_selected):
+def resize_excel_table_with_win32com(file_path, sheet_name, table_name, last_row):
+    """
+    Redimensiona una tabla de Excel de forma segura usando la automatización de Excel.
+    
+    Argumentos:
+        file_path (str): Ruta completa al archivo de Excel.
+        sheet_name (str): Nombre de la hoja donde se encuentra la tabla.
+        table_name (str): Nombre de la tabla a redimensionar.
+        last_row (int): La nueva fila final para la tabla.
+    """
+    try:
+        excel = win32.gencache.EnsureDispatch('Excel.Application')
+        excel.Visible = False
+        workbook = excel.Workbooks.Open(file_path)
+        worksheet = workbook.Sheets(sheet_name)
+        
+        table = worksheet.ListObjects(table_name)
+        
+        current_range = table.Range
+        
+        start_cell = current_range.Cells(1, 1)
+        end_cell = worksheet.Cells(last_row, current_range.Columns.Count)
+        
+        new_range = worksheet.Range(start_cell, end_cell)
 
-    wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO,keep_vba=True)
+        table.Resize(new_range)
+        
+        workbook.Save()
+        workbook.Close()
+        excel.Quit()
+        print(f"La tabla '{table_name}' ha sido redimensionada con éxito.")
+    except Exception as e:
+        print(f"Ocurrió un error al redimensionar la tabla: {e}")
+        try:
+            excel.Quit()
+        except:
+            pass
+
+def unify_base_registro_diario_avanzado(folder_selected):
+    wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO, keep_vba=True)
     ws_base = wb_base[REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME]
 
     fila_insercion_base = 3
-
     ultimo_insertado = fila_insercion_base
 
     INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME = "reporte_registro_diario_consult"
@@ -385,9 +422,12 @@ def unify_base_registro_diario_avanzado(folder_selected):
 
     column_number_format = [11]
     column_date_format = [1]
+    
+    REGISTRO_DIARIO_AVANZADO_TABLE_NAME = "BASE"
 
     files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO_AVANZADO, folder_selected))
     desktop = get_desktop_path()
+    
     for file in files:
         wb = load_workbook(file.path)
         ws = wb[INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME]
@@ -400,7 +440,7 @@ def unify_base_registro_diario_avanzado(folder_selected):
                     num_int = 0
                     try:
                         num_int = int(celda.value)
-                    except ValueError:
+                    except (ValueError, TypeError):
                         num_int = celda.value
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         num_int
@@ -408,8 +448,8 @@ def unify_base_registro_diario_avanzado(folder_selected):
                 elif celda.column in column_date_format:
                     date_format = None
                     try:
-                        date_format = datetime.strptime(celda.value, "%Y-%m-%d").date()
-                    except ValueError:
+                        date_format = datetime.strptime(str(celda.value), "%Y-%m-%d").date()
+                    except (ValueError, TypeError):
                         date_format = celda.value
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         date_format
@@ -418,14 +458,23 @@ def unify_base_registro_diario_avanzado(folder_selected):
                     ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
                         celda.value
                     )
-
             ultimo_insertado = ultimo_insertado + 1
 
         wb.close()
-    wb_base.save(
-        os.path.join(
-            desktop,
-            f"Registro_Diario_Avanzado_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}.xlsm",
-        )
+    
+    # Guardamos el archivo con los nuevos datos
+    file_path_output = os.path.join(
+        desktop,
+        f"Registro_Diario_Avanzado_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}.xlsm",
     )
+    wb_base.save(file_path_output)
     wb_base.close()
+    
+    # Llamamos a la función para redimensionar la tabla de forma segura,
+    # pasando la variable 'file_path_output' con la ruta correcta.
+    resize_excel_table_with_win32com(
+        file_path=file_path_output, 
+        sheet_name=REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME, 
+        table_name=REGISTRO_DIARIO_AVANZADO_TABLE_NAME, 
+        last_row=ultimo_insertado - 1
+    )
