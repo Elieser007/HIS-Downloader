@@ -392,7 +392,7 @@ def unify_base_registro_diario_avanzado(folder_selected):
         wb = load_workbook(file.path)
         ws = wb[INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME]
 
-        filas = ws[f"A{fila_copia_informe}" :f"BX{ws.max_row}"]
+        filas = ws[f"A{fila_copia_informe}" :f"BK{ws.max_row}"]
 
         for fila in filas:
             for celda in fila:
