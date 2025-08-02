@@ -472,9 +472,13 @@ def unify_base_registro_diario_avanzado(folder_selected):
     
     # Llamamos a la función para redimensionar la tabla de forma segura,
     # pasando la variable 'file_path_output' con la ruta correcta.
-    resize_excel_table_with_win32com(
-        file_path=file_path_output, 
-        sheet_name=REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME, 
-        table_name=REGISTRO_DIARIO_AVANZADO_TABLE_NAME, 
-        last_row=ultimo_insertado - 1
-    )
+    # 3. Llamamos a la función para redimensionar la tabla de forma segura,
+    #    SOLO si hay al menos una fila de datos.
+    final_data_row = ultimo_insertado - 1
+    if final_data_row >= 3: # El encabezado está en la fila 2, los datos en la 3 en adelante.
+        resize_excel_table_with_win32com(
+            file_path=file_path_output, 
+            sheet_name=REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME, 
+            table_name=REGISTRO_DIARIO_AVANZADO_TABLE_NAME, 
+            last_row=final_data_row
+        )
