@@ -399,6 +399,9 @@ def resize_excel_table_with_win32com(file_path, sheet_name, table_name, last_row
 
         table.Resize(new_range)
         
+        workbook.RefreshAll()
+        workbook.RefreshAll()
+
         workbook.Save()
         workbook.Close()
         excel.Quit()

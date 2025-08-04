@@ -93,7 +93,12 @@ with sync_playwright() as playwright:
         command=lambda: form_crear_base_registro_diario(),
     ).pack()
     tk.Label(frame_derecha, text="Opciones de Descarga Avanzada").pack()
-
+    tk.Label(
+        frame_derecha,
+        text="⚠️Importante!!!\nSe necesita tener instalado Excel 2013 o posterior para usar ésta seccion",
+        background="red",
+        foreground="white",
+    ).pack()
     tk.Button(
         frame_derecha,
         pady=4,
