@@ -22,28 +22,19 @@ rem La forma mas segura de activar el venv es con 'call' para que el script cont
 call .venv\Scripts\activate.bat
 
 rem -------------------------------------------------------
-rem -- Paso 3: Verificar e instalar pywin32 si es necesario --
+rem -- Paso 3: Instalar dependencias desde requirements.txt --
 rem -------------------------------------------------------
 echo.
-echo Verificando si "pywin32" esta instalado...
-python -c "import win32com" >nul 2>&1
-
+echo Instalando dependencias desde requirements.txt...
+pip install -r requirements.txt
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo La libreria "pywin32" no se encontro. Instalando...
-    pip install pywin32
-    if %ERRORLEVEL% NEQ 0 (
-        echo.
-        echo "pywin32" se instalo correctamente.
-    ) else (
-        echo.
-        echo Ocurrio un error al instalar "pywin32".
-        pause
-        exit /b 1
-    )
+    echo Ocurrio un error al instalar las dependencias.
+    pause
+    exit /b 1
 ) else (
     echo.
-    echo "pywin32" ya esta instalado.
+    echo Todas las dependencias se instalaron correctamente.
 )
 
 rem -------------------------------------------------------

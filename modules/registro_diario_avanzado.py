@@ -17,7 +17,8 @@ from ttkwidgets import CheckboxTreeview, Calendar
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from playwright.sync_api import Playwright
 from openpyxl import load_workbook
-import win32com.client as win32
+from openpyxl.utils import column_index_from_string
+import pandas as pd
 
 from modules.generics import divide_range_in_days, login, get_desktop_path
 
@@ -372,98 +373,108 @@ def form_crear_base_registro_diario_avanzado():
     root.quit()
 
 
-def resize_excel_table_with_win32com(file_path, sheet_name, table_name, last_row):
+def resize_excel_table(wb, ws, table_name, last_row):
     """
-    Redimensiona una tabla de Excel de forma segura usando la automatización de Excel.
+    Redimensiona una tabla de Excel en memoria usando openpyxl.
     
     Argumentos:
-        file_path (str): Ruta completa al archivo de Excel.
-        sheet_name (str): Nombre de la hoja donde se encuentra la tabla.
+        wb: Workbook de openpyxl.
+        ws: Worksheet de openpyxl.
         table_name (str): Nombre de la tabla a redimensionar.
         last_row (int): La nueva fila final para la tabla.
     """
     try:
-        excel = win32.gencache.EnsureDispatch('Excel.Application')
-        excel.Visible = False
-        workbook = excel.Workbooks.Open(file_path)
-        worksheet = workbook.Sheets(sheet_name)
+        table = None
+        for tbl in ws.tables.values():
+            if tbl.name == table_name:
+                table = tbl
+                break
         
-        table = worksheet.ListObjects(table_name)
+        if table is None:
+            raise ValueError(f"Tabla '{table_name}' no encontrada en la hoja '{ws.title}'")
         
-        current_range = table.Range
+        # Parse referencia actual de la tabla, ej: "A1:Z10"
+        ref_parts = table.ref.split(':')
+        start_cell = ws[ref_parts[0]]
+        end_cell = ws[ref_parts[1]]
         
-        start_cell = current_range.Cells(1, 1)
-        end_cell = worksheet.Cells(last_row, current_range.Columns.Count)
+        # Nueva celda final: misma columna, nueva última fila
+        new_end_cell = ws.cell(row=last_row, column=end_cell.column)
         
-        new_range = worksheet.Range(start_cell, end_cell)
-
-        table.Resize(new_range)
+        # Construir nueva referencia
+        new_ref = f"{start_cell.coordinate}:{new_end_cell.coordinate}"
         
-        workbook.RefreshAll()
-        workbook.RefreshAll()
-
-        workbook.Save()
-        workbook.Close()
-        excel.Quit()
+        # Actualizar referencia de la tabla
+        table.ref = new_ref
+        
         print(f"La tabla '{table_name}' ha sido redimensionada con éxito.")
     except Exception as e:
         print(f"Ocurrió un error al redimensionar la tabla: {e}")
-        try:
-            excel.Quit()
-        except:
-            pass
 
 def unify_base_registro_diario_avanzado(folder_selected):
+    """Unifica y optimiza archivos de Registro Diario Avanzado usando pandas y openpyxl."""
     wb_base = load_workbook(DIR_PLANTILLA_REGISTRO_DIARIO_AVANZADO, keep_vba=True)
     ws_base = wb_base[REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME]
 
     fila_insercion_base = 3
-    ultimo_insertado = fila_insercion_base
-
     INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME = "reporte_registro_diario_consult"
     fila_copia_informe = 7
 
     column_number_format = [11]
     column_date_format = [1]
+    column_with_formula = ["BL"]  # Lista de letras de columnas que contienen fórmulas
     
     REGISTRO_DIARIO_AVANZADO_TABLE_NAME = "BASE"
 
-    files = os.scandir(os.path.join(DIR_REGISTRO_DIARIO_AVANZADO, folder_selected))
+    files = sorted(os.scandir(os.path.join(DIR_REGISTRO_DIARIO_AVANZADO, folder_selected)),
+                   key=lambda f: f.name)
     desktop = get_desktop_path()
     
+    ultimo_insertado = fila_insercion_base
+    
     for file in files:
-        wb = load_workbook(file.path)
-        ws = wb[INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME]
-
-        filas = ws[f"A{fila_copia_informe}" :f"BK{ws.max_row}"]
-
-        for fila in filas:
-            for celda in fila:
-                if celda.column in column_number_format:
-                    num_int = 0
-                    try:
-                        num_int = int(celda.value)
-                    except (ValueError, TypeError):
-                        num_int = celda.value
-                    ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
-                        num_int
-                    )
-                elif celda.column in column_date_format:
-                    date_format = None
-                    try:
-                        date_format = datetime.strptime(str(celda.value), "%Y-%m-%d").date()
-                    except (ValueError, TypeError):
-                        date_format = celda.value
-                    ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
-                        date_format
-                    )
-                else:
-                    ws_base.cell(row=ultimo_insertado, column=celda.column).value = (
-                        celda.value
-                    )
-            ultimo_insertado = ultimo_insertado + 1
-
-        wb.close()
+        try:
+            # Lectura con pandas para mejor performance
+            df = pd.read_excel(
+                file.path,
+                sheet_name=INFORME_REGISTRO_DIARIO_AVANZADO_SHEET_NAME,
+                skiprows=fila_copia_informe - 1
+            )
+            
+            # Convertir a tipos apropiados
+            df = df.astype(object)
+            
+            # Formatear columnas numéricas
+            for col in column_number_format:
+                if col <= len(df.columns):
+                    df.iloc[:, col - 1] = pd.to_numeric(
+                        df.iloc[:, col - 1], errors='coerce'
+                    ).fillna(0).astype(int)
+            
+            # Formatear columnas de fecha
+            for col in column_date_format:
+                if col <= len(df.columns):
+                    df.iloc[:, col - 1] = pd.to_datetime(
+                        df.iloc[:, col - 1], errors='coerce'
+                    ).dt.date
+            
+            # Insertar datos en el workbook (sin incluir columnas con fórmulas)
+            for _, row in df.iterrows():
+                for col_idx, value in enumerate(row, start=1):
+                    ws_base.cell(row=ultimo_insertado, column=col_idx).value = value
+                ultimo_insertado += 1
+                
+        except Exception as e:
+            print(f"Error procesando archivo {file.name}: {e}")
+            continue
+    
+    # Extender fórmulas a las nuevas filas en las columnas especificadas
+    for col_letter in column_with_formula:
+        col_num = column_index_from_string(col_letter)
+        reference_formula = ws_base.cell(row=fila_insercion_base, column=col_num).value
+        if reference_formula and isinstance(reference_formula, str) and reference_formula.startswith('='):
+            for row in range(fila_insercion_base + 1, ultimo_insertado):
+                ws_base.cell(row=row, column=col_num).value = reference_formula
     
     # Guardamos el archivo con los nuevos datos
     file_path_output = os.path.join(
@@ -471,17 +482,17 @@ def unify_base_registro_diario_avanzado(folder_selected):
         f"Registro_Diario_Avanzado_{str(datetime.now().strftime('%Y-%m-%d_%H.%M.%S.hs'))}.xlsm",
     )
     wb_base.save(file_path_output)
-    wb_base.close()
     
-    # Llamamos a la función para redimensionar la tabla de forma segura,
-    # pasando la variable 'file_path_output' con la ruta correcta.
-    # 3. Llamamos a la función para redimensionar la tabla de forma segura,
-    #    SOLO si hay al menos una fila de datos.
+    # Redimensionar la tabla SOLO si hay al menos una fila de datos
     final_data_row = ultimo_insertado - 1
-    if final_data_row >= 3: # El encabezado está en la fila 2, los datos en la 3 en adelante.
-        resize_excel_table_with_win32com(
-            file_path=file_path_output, 
-            sheet_name=REGISTRO_DIARIO_AVANZADO_BASE_SHEET_NAME, 
-            table_name=REGISTRO_DIARIO_AVANZADO_TABLE_NAME, 
+    if final_data_row >= 3:  # El encabezado está en la fila 2, los datos en la 3 en adelante
+        resize_excel_table(
+            wb=wb_base,
+            ws=ws_base,
+            table_name=REGISTRO_DIARIO_AVANZADO_TABLE_NAME,
             last_row=final_data_row
         )
+        wb_base.save(file_path_output)
+    
+    wb_base.close()
+    print(f"Archivo guardado en: {file_path_output}")

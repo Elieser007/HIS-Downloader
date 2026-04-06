@@ -14,7 +14,7 @@ def divide_range_in_days(start_date: str, end_date: str):
     fecha_inicio = datetime.date(int(start[0]), int(start[1]), int(start[2]))
     fecha_fin = datetime.date(int(end[0]), int(end[1]), int(end[2]))
 
-    intervalo_dias = 31
+    intervalo_dias = 15
     lista_subrangos = []
 
     while fecha_inicio <= fecha_fin:
