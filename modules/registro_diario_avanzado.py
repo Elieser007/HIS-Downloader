@@ -431,6 +431,7 @@ def unify_base_registro_diario_avanzado(folder_selected):
     desktop = get_desktop_path()
     
     ultimo_insertado = fila_insercion_base
+    all_dfs = []
     
     for file in files:
         try:
@@ -458,15 +459,50 @@ def unify_base_registro_diario_avanzado(folder_selected):
                         df.iloc[:, col - 1], errors='coerce'
                     ).dt.date
             
-            # Insertar datos en el workbook (sin incluir columnas con fórmulas)
-            for _, row in df.iterrows():
-                for col_idx, value in enumerate(row, start=1):
-                    ws_base.cell(row=ultimo_insertado, column=col_idx).value = value
-                ultimo_insertado += 1
+            if not df.empty:
+                all_dfs.append(df)
                 
         except Exception as e:
             print(f"Error procesando archivo {file.name}: {e}")
             continue
+    
+    if all_dfs:
+        df_total = pd.concat(all_dfs, ignore_index=True)
+        
+        duplicate_counts = (
+            df_total.groupby(list(df_total.columns), dropna=False)
+            .size()
+            .reset_index(name="count")
+        )
+        duplicate_exact = duplicate_counts[duplicate_counts["count"] > 1]
+        if not duplicate_exact.empty:
+            key_positions = [0, 3, 5, 7]
+            key_columns = [
+                df_total.columns[pos]
+                for pos in key_positions
+                if pos < len(df_total.columns)
+            ]
+            print("Duplicados exactos detectados en todos los archivos:")
+            print(
+                duplicate_exact[
+                    [*key_columns, "count"]
+                ].to_string(index=False)
+            )
+            print(
+                "Estos registros tienen todas las columnas iguales y aparecen más de una vez. "
+                "Solo se guardará una copia de cada uno en el archivo final."
+            )
+        
+        # Mantener solo una copia de cada fila duplicada exacta
+        df_total = df_total.drop_duplicates(keep="first")
+        
+        # Insertar datos en el workbook (sin incluir columnas con fórmulas)
+        for _, row in df_total.iterrows():
+            for col_idx, value in enumerate(row, start=1):
+                ws_base.cell(row=ultimo_insertado, column=col_idx).value = value
+            ultimo_insertado += 1
+    else:
+        print("No se encontraron datos para procesar en la carpeta seleccionada.")
     
     # Extender fórmulas a las nuevas filas en las columnas especificadas
     for col_letter in column_with_formula:
